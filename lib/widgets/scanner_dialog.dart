@@ -10,9 +10,25 @@ class ScannerDialog extends StatefulWidget {
 }
 
 class _ScannerDialogState extends State<ScannerDialog> {
-  final MobileScannerController _controller = MobileScannerController(formats: const [BarcodeFormat.all]);
+  late final MobileScannerController _controller;
   bool _handled = false;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = MobileScannerController(
+      formats: const [BarcodeFormat.all],
+      onPermissionSet: (granted) {
+        if (!granted) {
+          setState(() {
+            _errorMessage =
+                'Permissão de câmera negada. Libere o acesso nas configurações do navegador e recarregue.';
+          });
+        }
+      },
+    );
+  }
 
   @override
   void dispose() {
@@ -39,13 +55,6 @@ class _ScannerDialogState extends State<ScannerDialog> {
             MobileScanner(
               controller: _controller,
               onDetect: _onDetect,
-              onPermissionSet: (ctrl, granted) {
-                if (!granted) {
-                  setState(() {
-                    _errorMessage = 'Permissão de câmera negada. Libere o acesso nas configurações do navegador e tente novamente.';
-                  });
-                }
-              },
               errorBuilder: (context, error, child) {
                 return _CenteredMessage(
                     text:
