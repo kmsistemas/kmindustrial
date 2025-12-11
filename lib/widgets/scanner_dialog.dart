@@ -12,6 +12,7 @@ class ScannerDialog extends StatefulWidget {
 class _ScannerDialogState extends State<ScannerDialog> {
   final MobileScannerController _controller = MobileScannerController(formats: const [BarcodeFormat.all]);
   bool _handled = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -38,6 +39,18 @@ class _ScannerDialogState extends State<ScannerDialog> {
             MobileScanner(
               controller: _controller,
               onDetect: _onDetect,
+              onPermissionSet: (ctrl, granted) {
+                if (!granted) {
+                  setState(() {
+                    _errorMessage = 'Permissão de câmera negada. Libere o acesso nas configurações do navegador e tente novamente.';
+                  });
+                }
+              },
+              errorBuilder: (context, error, child) {
+                return _CenteredMessage(
+                    text:
+                        'Não foi possível acessar a câmera.\nVerifique permissões e se há câmera disponível.\nDetalhe: ${error.errorDetails?.message ?? error.toString()}');
+              },
             ),
             Positioned(
               top: 8,
@@ -57,6 +70,10 @@ class _ScannerDialogState extends State<ScannerDialog> {
                 child: SizedBox(width: 200, height: 200),
               ),
             ),
+            if (_errorMessage != null)
+              _CenteredMessage(
+                  text:
+                      'Não foi possível usar a câmera.\n$_errorMessage\nSe já negou antes, limpe as permissões do site e recarregue.'),
           ],
         ),
       ),
@@ -70,4 +87,23 @@ Future<String?> showScannerDialog(BuildContext context) {
     context: context,
     builder: (_) => const ScannerDialog(),
   );
+}
+
+class _CenteredMessage extends StatelessWidget {
+  final String text;
+  const _CenteredMessage({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.black87,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.all(16),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: const TextStyle(color: Colors.white, fontSize: 14),
+      ),
+    );
+  }
 }
